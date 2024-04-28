@@ -1,6 +1,7 @@
 
 CC=gcc
-#Set empty CROSS_COMPILE if not set by command line
+# CROSS_COMPILE is set to empty when the varaiable is not specified in command line
+# Examle of use : make CROSS_COMPILE=aarch64-none-linux-gnu- all
 CROSS_COMPILE ?=
 TARGET = writer
 SRC = writer.c
@@ -11,4 +12,4 @@ ${TARGET}: ${SRC}
 	${CROSS_COMPILE}${CC}  ${SRC} -o ${TARGET}
 
 clean: 
-	rm ${TARGET}
+	-rm -if ${TARGET}
