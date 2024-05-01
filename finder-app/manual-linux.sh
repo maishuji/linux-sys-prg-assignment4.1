@@ -31,27 +31,26 @@ if [ ! -d "${OUTDIR}/linux-stable" ]; then
     #Clone only if the repository does not exist.
 	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
 	git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
+    
+    echo "Checking out version ${KERNEL_VERSION}"
+    git checkout ${KERNEL_VERSION}
+    # Need a patch to fix multiple definition of yyloc in gcc 10.xx version
+    # Patch is here : https://github.com/torvalds/linux/commit/e33a814e772cdc36436c8c188d8c42d019fda639.patch
+    # Content copied in ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
+    echo "Applying patch"
+    git apply ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
+
 fi
 if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     cd linux-stable
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
 
-    # Need a patch to fix multiple definition of yyloc in gcc 10.xx version
-    # Patch is here : https://github.com/torvalds/linux/commit/e33a814e772cdc36436c8c188d8c42d019fda639.patch
-    # Content popied in ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
-    echo "Applying patch "
-    git apply ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
-
     # DONE: Add your kernel build steps here
-    echo "Building the kernel"
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}  defconfig
-    echo "Building the kernel2"
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
-    echo "Building the kernel3"
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
-    echo "Building the kernel4"
 fi
 
 echo "Adding the Image in outdir"
