@@ -31,7 +31,7 @@ if [ ! -d "${OUTDIR}/linux-stable" ]; then
     #Clone only if the repository does not exist.
 	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
 	git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
-    
+    cd linux-stable
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
     # Need a patch to fix multiple definition of yyloc in gcc 10.xx version
@@ -39,6 +39,7 @@ if [ ! -d "${OUTDIR}/linux-stable" ]; then
     # Content copied in ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
     echo "Applying patch"
     git apply ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
+    cd ..
 
 fi
 if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
