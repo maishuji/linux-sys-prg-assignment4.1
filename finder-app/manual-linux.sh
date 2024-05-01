@@ -41,7 +41,7 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     # Patch is here : https://github.com/torvalds/linux/commit/e33a814e772cdc36436c8c188d8c42d019fda639.patch
     # Content popied in ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
     echo "Applying patch "
-    #git apply ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
+    git apply ${FINDER_APP_DIR}/kernel-yyloc-fix.patch
 
     # DONE: Add your kernel build steps here
     echo "Building the kernel"
