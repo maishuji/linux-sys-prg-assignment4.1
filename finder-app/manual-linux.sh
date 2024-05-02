@@ -49,7 +49,7 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
 
     # DONE: Add your kernel build steps here
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}  defconfig
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
     make -j4 ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE all
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
@@ -122,18 +122,24 @@ cd ${FINDER_APP_DIR}
 pwd
 make clean
 make CROSS_COMPILE=${CROSS_COMPILE} writer
+cp writer ${OUTDIR}/rootfs/home
 
 # DONE: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
 cd ${FINDER_APP_DIR}
-cp {finder.sh,conf/username.txt,conf/assignment.txt,finder-test.sh,autorun-qemu.sh} ${ROOTFS}/home
+cp {finder.sh,finder-test.sh,autorun-qemu.sh} ${ROOTFS}/home
+mkdir "${OUTDIR}/rootfs/home/conf"
+cp -a conf/username.txt "${OUTDIR}/rootfs/home/conf"
+cp -a conf/assignment.txt "${OUTDIR}/rootfs/home/conf"
 
 # DONE: Chown the root directory
 echo "Changing root fs permissions..."
-cd "${ROOTFS}"
-sudo chown -R root:root *
+sudo chown -R root:root ${OUTDIR}/rootfs
 
 # DONE: Create initramfs.cpio.gz
-find . | cpio -H newc -ov --owner root:root > ../initramfs.cpio
-cd ..
+cd "${ROOTFS}"
+echo "Create initramfs.cpio.gz"
+
+sudo find . | sudo cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+cd "${OUTDIR}"
 gzip -f initramfs.cpio
