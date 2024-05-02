@@ -51,8 +51,8 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
     make -j4 ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE all
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
+    #make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
+    #make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
 fi
 
 echo "Adding the Image in outdir"
@@ -67,9 +67,8 @@ then
 fi
 
 # DONE: Create necessary base directories
-ROOTFS=${OUTDIR}/rootfs
-mkdir ${ROOTFS}
-cd "${ROOTFS}"
+mkdir ${OUTDIR}/rootfs
+cd "${OUTDIR}/rootfs"
 mkdir -p bin dev etc home lib lib64 proc sbin sys tmp us var
 mkdir -p usr/bin usr/lib usr/sbin
 mkdir -p var/log
@@ -91,35 +90,34 @@ fi
 # DONE: Make and install busybox
 echo "Make and install busybox..."
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-make CONFIG_PREFIX="${ROOTFS}" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
-cd "${ROOTFS}"
+make CONFIG_PREFIX="${OUTDIR}/rootfs" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
+cd "${OUTDIR}/rootfs"
 
 echo "Library dependencies"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
+${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpreter"
+${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
 
 # DONE: Add library dependencies to rootfs
 export SYSROOTPATH=$(${CROSS_COMPILE}gcc -print-sysroot)
-cd "${ROOTFS}"
+cd "${OUTDIR}/rootfs"
 
 # Copying interpreter form toolchain to rootsys
 INTERPRETER_DEP=$(${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter" |  cut -d":" -f2 | cut -d"]" -f1 | tr -d "[:space:]")
-cp -a ${SYSROOTPATH}/${INTERPRETER_DEP} ${ROOTFS}/lib
+cp -a ${SYSROOTPATH}/${INTERPRETER_DEP} ${OUTDIR}/rootfs/lib
 
 # Copying required libs from toolchain to rootsys
 LIBRARY_DEPS="$(${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library" |  cut -d"[" -f2 | cut -d"]" -f1)"
 for dep in $LIBRARY_DEPS; do
-    cp ${SYSROOTPATH}/lib64/${dep} ${ROOTFS}/lib64
+    cp ${SYSROOTPATH}/lib64/${dep} ${OUTDIR}/rootfs/lib64
 done
 
 # DONE: Make device nodes : (1) null device, (2) console device
-sudo mknod -m 666 dev/null c 1 3
-sudo mknod -m 666 dev/console c 5 1
+sudo mknod -m 666 ${OUTDIR}/rootfs/dev/null c 1 3
+sudo mknod -m 666 ${OUTDIR}/rootfs/dev/console c 5 1
 ls -l dev
 
 # DONE: Clean and build the writer utility
 cd ${FINDER_APP_DIR}
-pwd
 make clean
 make CROSS_COMPILE=${CROSS_COMPILE} writer
 cp writer ${OUTDIR}/rootfs/home
@@ -127,7 +125,7 @@ cp writer ${OUTDIR}/rootfs/home
 # DONE: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
 cd ${FINDER_APP_DIR}
-cp {finder.sh,finder-test.sh,autorun-qemu.sh} ${ROOTFS}/home
+cp {finder.sh,finder-test.sh,autorun-qemu.sh} ${OUTDIR}/rootfs/home
 mkdir "${OUTDIR}/rootfs/home/conf"
 cp -a conf/username.txt "${OUTDIR}/rootfs/home/conf"
 cp -a conf/assignment.txt "${OUTDIR}/rootfs/home/conf"
@@ -137,7 +135,7 @@ echo "Changing root fs permissions..."
 sudo chown -R root:root ${OUTDIR}/rootfs
 
 # DONE: Create initramfs.cpio.gz
-cd "${ROOTFS}"
+cd "${OUTDIR}/rootfs"
 echo "Create initramfs.cpio.gz"
 
 sudo find . | sudo cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
